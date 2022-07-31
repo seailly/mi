@@ -36,6 +36,9 @@ const (
 	LT = "<"
 	GT = ">"
 
+	EQ     = "=="
+	NOT_EQ = "!="
+
 	// Delimiters
 
 	// Comma
