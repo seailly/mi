@@ -63,3 +63,17 @@ func (i *Identifier) expressionNode() {}
 func (i *Identifier) TokenLiteral() string {
 	return i.Token.Literal
 }
+
+// ReturnStatement
+type ReturnStatement struct {
+	Token       token.Token
+	ReturnValue Expression
+}
+
+// statementNode
+func (rs *ReturnStatement) statementNode() {}
+
+// TokenLiteral
+func (rs *ReturnStatement) TokenLiteral() string {
+	return rs.Token.Literal
+}
