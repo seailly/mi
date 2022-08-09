@@ -1,9 +1,5 @@
 package ast
 
-import (
-	"bytes"
-)
-
 // Node A node in the AST
 type Node interface {
 	TokenLiteral() string
