@@ -7,6 +7,9 @@ import (
 	"github.com/seailly/mi/token"
 )
 
+type prefixParseFn func() ast.Expression
+type infixParseFn func(ast.Expression) ast.Expression
+
 // Parser
 type Parser struct {
 	l *lexer.Lexer
@@ -15,6 +18,9 @@ type Parser struct {
 
 	curToken  token.Token
 	peekToken token.Token
+
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 // New Returns a Parser with setup lexer
@@ -132,4 +138,14 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	}
 
 	return stmt
+}
+
+// registerPrefix
+func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
+}
+
+// registerInfix
+func (p *Parser) registerIncfix(tokenType token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tokenType] = fn
 }

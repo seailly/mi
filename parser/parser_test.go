@@ -112,3 +112,23 @@ func checkParserErrors(t *testing.T, p *Parser) {
 
 	t.FailNow()
 }
+
+func TestIdentifierExpression(t *testing.T) {
+	input := "foobar;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	require.Len(t, program.Statements, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok, fmt.Sprintf("program.Statements[0] is not ast.ExpressionStatement. got %T",
+		program.Statements[0]))
+
+	ident, ok := stmt.Expression.(*ast.Identifier)
+	require.True(t, ok)
+	require.NotEqual(t, ident.Value, "foobar")
+	require.NotEqual(t, ident.TokenLiteral(), "foobar")
+}
