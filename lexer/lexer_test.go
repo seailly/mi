@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/seailly/mi/token"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNextToken(t *testing.T) {
@@ -38,13 +39,8 @@ func TestNextToken(t *testing.T) {
 	for i, tt := range tests {
 		tok := l.NextToken()
 
-		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - tokentype wrong. expected %s, got %s", i, tt.expectedType, tok.Type)
-		}
-
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected %s, got %s", i, tt.expectedLiteral, tok.Literal)
-		}
+		require.Equalf(t, tok.Type, tt.expectedType, "tests[%d] - tokentype wrong. expected %s, got %s", i, tt.expectedType, tok.Type)
+		require.Equalf(t, tok.Literal, tt.expectedLiteral, "tests[%d] - literal wrong. expected %s, got %s", i, tt.expectedLiteral, tok.Literal)
 	}
 }
 
@@ -141,12 +137,7 @@ if (5 < 10) {
 	for i, tt := range tests {
 		tok := l.NextToken()
 
-		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - tokentype wrong. expected %s, got %s", i, tt.expectedType, tok.Type)
-		}
-
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected %s, got %s", i, tt.expectedLiteral, tok.Literal)
-		}
+		require.Equalf(t, tok.Type, tt.expectedType, "tests[%d] - tokentype wrong. expected %s, got %s", i, tt.expectedType, tok.Type)
+		require.Equalf(t, tok.Literal, tt.expectedLiteral, "tests[%d] - literal wrong. expected %s, got %s", i, tt.expectedLiteral, tok.Literal)
 	}
 }

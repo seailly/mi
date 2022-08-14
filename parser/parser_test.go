@@ -1,10 +1,12 @@
 package parser
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/seailly/mi/ast"
 	"github.com/seailly/mi/lexer"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMutStatement(t *testing.T) {
@@ -18,15 +20,10 @@ mut foobar = 838383;
 	p := New(l)
 
 	program := p.ParseProgram()
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
-	}
+	require.NotNil(t, p)
 
 	checkParserErrors(t, p)
-
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got %d", len(program.Statements))
-	}
+	require.Len(t, program.Statements, 3)
 
 	tests := []struct {
 		expectedIdentifer string
@@ -54,13 +51,8 @@ mut 838383;
 	p := New(l)
 
 	program := p.ParseProgram()
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
-	}
-
-	if len(p.errors) != 3 {
-		t.Errorf("Error not caught by parser")
-	}
+	require.NotNil(t, program)
+	require.Len(t, p.errors, 3)
 }
 
 func TestReturnStatement(t *testing.T) {
@@ -74,16 +66,10 @@ return 993322;
 	p := New(l)
 
 	program := p.ParseProgram()
-	if program == nil {
-		t.Fatalf("ParseProgram() returned nil")
-	}
+	require.NotNil(t, program)
 
 	// TODO: Test error case
-
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got %d",
-			len(program.Statements))
-	}
+	require.Equal(t, len(program.Statements), 3)
 
 	for _, stmt := range program.Statements {
 		returnStmt, ok := stmt.(*ast.ReturnStatement)
@@ -91,10 +77,8 @@ return 993322;
 			t.Errorf("stmt not *ast.returnStatement. got %T", stmt)
 			continue
 		}
-		if returnStmt.TokenLiteral() != "return" {
-			t.Errorf("returnStmt.TokenLiteral not 'return', got %q",
-				returnStmt.TokenLiteral())
-		}
+
+		require.Equal(t, returnStmt.TokenLiteral(), "return")
 	}
 }
 
@@ -105,20 +89,10 @@ func testMutStatement(t *testing.T, s ast.Statement, name string) bool {
 	}
 
 	mutStmt, ok := s.(*ast.MutStatement)
-	if !ok {
-		t.Errorf("s not *ast.MutStatement. got %T", s)
-		return false
-	}
+	require.True(t, ok, "s not *ast.MutStatement. got %T", s)
 
-	if mutStmt.Name.Value != name {
-		t.Errorf("muStmt.Name.Value not '%s'. got %s", name, mutStmt.Name.Value)
-		return false
-	}
-
-	if mutStmt.Name.TokenLiteral() != name {
-		t.Errorf("s.Name not '%s'. got %s", name, mutStmt.Name)
-		return false
-	}
+	require.Equalf(t, mutStmt.Name.Value, name, "muStmt.Name.Value not '%s'. got %s", name, mutStmt.Name.Value)
+	require.Equalf(t, mutStmt.Name.TokenLiteral(), name, "s.Name not '%s'. got %s", name, mutStmt.Name)
 
 	return true
 }
