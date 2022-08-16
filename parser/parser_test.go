@@ -129,6 +129,6 @@ func TestIdentifierExpression(t *testing.T) {
 
 	ident, ok := stmt.Expression.(*ast.Identifier)
 	require.True(t, ok)
-	require.NotEqual(t, ident.Value, "foobar")
-	require.NotEqual(t, ident.TokenLiteral(), "foobar")
+	require.Equal(t, ident.Value, "foobar")
+	require.Equal(t, ident.TokenLiteral(), "foobar")
 }

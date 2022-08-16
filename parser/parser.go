@@ -7,6 +7,17 @@ import (
 	"github.com/seailly/mi/token"
 )
 
+const (
+	_ int = iota
+	LOWEST
+	EQUALS      // ==
+	LESSGREATER // < || >
+	SUM         // +
+	PRODUCT     // *
+	PREFIX      // -x || !x
+	CALL        // func()
+)
+
 type prefixParseFn func() ast.Expression
 type infixParseFn func(ast.Expression) ast.Expression
 
@@ -30,6 +41,9 @@ func New(l *lexer.Lexer) *Parser {
 	// Reads two tokens so both curToken and peekToken are set
 	p.nextToken()
 	p.nextToken()
+
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefix(token.IDENT, p.parseIdentifier)
 
 	return p
 }
@@ -98,8 +112,25 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	default:
+		return p.parseExpressionStatement()
+	}
+}
+
+// parseExpression
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
 		return nil
 	}
+
+	leftExp := prefix()
+
+	return leftExp
+}
+
+// parseIdentifier
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
 // parseMutStatement
@@ -134,6 +165,19 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	// TODO: Parse expression
 
 	for !p.curTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+// parseExpressionStatement
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.curToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
