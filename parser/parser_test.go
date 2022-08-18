@@ -132,3 +132,22 @@ func TestIdentifierExpression(t *testing.T) {
 	require.Equal(t, ident.Value, "foobar")
 	require.Equal(t, ident.TokenLiteral(), "foobar")
 }
+
+func TestIntegerLiteralExpression(t *testing.T) {
+	input := "5;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	require.Len(t, program.Statements, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	literal, ok := stmt.Expression.(*ast.IntegerLiteral)
+	require.True(t, ok)
+	require.Equal(t, literal.Value, int64(5))
+	require.Equal(t, literal.TokenLiteral(), "5")
+}
