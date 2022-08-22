@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/seailly/mi/ast"
 	"github.com/seailly/mi/lexer"
@@ -47,6 +46,18 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.BANG, p.parsePrefixExpression)
+	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
+
+	p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	p.registerInfix(token.PLUS, p.parseInfixExpression)
+	p.registerInfix(token.MINUS, p.parseInfixExpression)
+	p.registerInfix(token.SLASH, p.parseInfixExpression)
+	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
+	p.registerInfix(token.EQ, p.parseInfixExpression)
+	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
+	p.registerInfix(token.LT, p.parseInfixExpression)
+	p.registerInfix(token.GT, p.parseInfixExpression)
 
 	return p
 }
@@ -89,127 +100,4 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 		p.peekError(t)
 		return false
 	}
-}
-
-// ParseProgram Creates the root AST node interating until EOF is found
-func (p *Parser) ParseProgram() *ast.Program {
-	program := &ast.Program{}
-	program.Statements = []ast.Statement{}
-
-	for p.curToken.Type != token.EOF {
-		stmt := p.parseStatement()
-		if stmt != nil {
-			program.Statements = append(program.Statements, stmt)
-		}
-		p.nextToken()
-	}
-
-	return program
-}
-
-// parseStatement
-func (p *Parser) parseStatement() ast.Statement {
-	switch p.curToken.Type {
-	case token.MUT:
-		return p.parseMutStatement()
-	case token.RETURN:
-		return p.parseReturnStatement()
-	default:
-		return p.parseExpressionStatement()
-	}
-}
-
-// parseExpression
-func (p *Parser) parseExpression(precedence int) ast.Expression {
-	prefix := p.prefixParseFns[p.curToken.Type]
-	if prefix == nil {
-		return nil
-	}
-
-	leftExp := prefix()
-
-	return leftExp
-}
-
-// parseIdentifier
-func (p *Parser) parseIdentifier() ast.Expression {
-	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-}
-
-// parseMutStatement
-func (p *Parser) parseMutStatement() *ast.MutStatement {
-	stmt := &ast.MutStatement{Token: p.curToken}
-
-	if !p.expectPeek(token.IDENT) {
-		return nil
-	}
-
-	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
-
-	if !p.expectPeek(token.ASSIGN) {
-		return nil
-	}
-
-	// TODO: Parse expression
-
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-
-	return stmt
-}
-
-// parseReturnStatement
-func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
-	stmt := &ast.ReturnStatement{Token: p.curToken}
-
-	p.nextToken()
-
-	// TODO: Parse expression
-
-	for !p.curTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-
-	return stmt
-}
-
-// parseExpressionStatement
-func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	stmt := &ast.ExpressionStatement{Token: p.curToken}
-
-	stmt.Expression = p.parseExpression(LOWEST)
-
-	if p.peekTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-
-	return stmt
-}
-
-// parseIntegerLiteral
-func (p *Parser) parseIntegerLiteral() ast.Expression {
-	lit := &ast.IntegerLiteral{
-		Token: p.curToken,
-	}
-
-	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
-	if err != nil {
-		p.errors = append(p.errors, fmt.Sprintf("could not parse %q as integer", p.curToken.Literal))
-		return nil
-	}
-
-	lit.Value = value
-
-	return lit
-}
-
-// registerPrefix
-func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
-	p.prefixParseFns[tokenType] = fn
-}
-
-// registerInfix
-func (p *Parser) registerIncfix(tokenType token.TokenType, fn infixParseFn) {
-	p.infixParseFns[tokenType] = fn
 }
