@@ -134,14 +134,35 @@ func TestIntegerLiteralExpression(t *testing.T) {
 	require.Equal(t, literal.TokenLiteral(), "5")
 }
 
+func TestBooleanExpression(t *testing.T) {
+	input := "true;"
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	require.Len(t, program.Statements, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	literal, ok := stmt.Expression.(*ast.Boolean)
+	require.True(t, ok)
+	require.Equal(t, literal.Value, true)
+	require.Equal(t, literal.TokenLiteral(), "true")
+}
+
 func TestParsingPrefixExpressions(t *testing.T) {
 	prefixTests := []struct {
 		input        string
 		operator     string
-		integerValue int64
+		integerValue interface{}
 	}{
 		{"!5", "!", 5},
 		{"-15", "-", 15},
+		{"!true;", "!", true},
+		{"!false;", "!", false},
 	}
 
 	for _, tt := range prefixTests {
@@ -159,7 +180,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.PrefixExpression)
 		require.True(t, ok)
 		require.Equal(t, exp.Operator, tt.operator)
-		testIntegerLiteral(t, exp.Right, tt.integerValue)
+		testLiteralExpression(t, exp.Right, tt.integerValue)
 	}
 }
 
@@ -167,9 +188,9 @@ func TestParsingPrefixExpressions(t *testing.T) {
 func TestParsingInfixExpressions(t *testing.T) {
 	infixTests := []struct {
 		input      string
-		leftValue  int64
+		leftValue  interface{}
 		operator   string
-		rightValue int64
+		rightValue interface{}
 	}{
 		{"5 + 5;", 5, "+", 5},
 		{"5 - 5;", 5, "-", 5},
@@ -179,6 +200,9 @@ func TestParsingInfixExpressions(t *testing.T) {
 		{"5 < 5;", 5, "<", 5},
 		{"5 == 5;", 5, "==", 5},
 		{"5 != 5;", 5, "!=", 5},
+		{"true == true", true, "==", true},
+		{"true != false", true, "!=", false},
+		{"false == false", false, "==", false},
 	}
 
 	for _, tt := range infixTests {
@@ -197,10 +221,20 @@ func TestParsingInfixExpressions(t *testing.T) {
 		exp, ok := stmt.Expression.(*ast.InfixExpression)
 		require.True(t, ok)
 
-		testIntegerLiteral(t, exp.Left, tt.leftValue)
+		testLiteralExpression(t, exp.Left, tt.leftValue)
 		require.Equal(t, exp.Operator, tt.operator)
-		testIntegerLiteral(t, exp.Right, tt.rightValue)
+		testLiteralExpression(t, exp.Right, tt.rightValue)
 	}
+}
+
+// testInfixExpression
+func testInfixExpression(t *testing.T, exp ast.Expression, left interface{}, operator string, right interface{}) {
+	opExp, ok := exp.(*ast.InfixExpression)
+
+	require.True(t, ok)
+	testLiteralExpression(t, opExp.Left, left)
+	require.Equal(t, operator, opExp.Operator)
+	testLiteralExpression(t, opExp.Right, right)
 }
 
 // TestOperatorPrecedenceParsing
@@ -257,6 +291,22 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"3 + 4 * 5 == 3 * 1 + 4 * 5",
 			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
 		},
+		{
+			"true",
+			"true",
+		},
+		{
+			"false",
+			"false",
+		},
+		{
+			"3 > 5 == false",
+			"((3 > 5) == false)",
+		},
+		{
+			"3 < 5 == true",
+			"((3 < 5) == true)",
+		},
 	}
 
 	for _, tt := range tests {
@@ -281,10 +331,40 @@ func testMutStatement(t *testing.T, s ast.Statement, name string) {
 	require.Equalf(t, mutStmt.Name.TokenLiteral(), name, "s.Name not '%s'. got %s", name, mutStmt.Name)
 }
 
+// testLiteralExpression
+func testLiteralExpression(t *testing.T, exp ast.Expression, expected interface{}) {
+	switch v := expected.(type) {
+	case int:
+		testIntegerLiteral(t, exp, int64(v))
+	case int64:
+		testIntegerLiteral(t, exp, v)
+	case bool:
+		testBooleanLiteral(t, exp, v)
+	case string:
+		testIdentifier(t, exp, v)
+	}
+}
+
 // testIntegerLiteral
 func testIntegerLiteral(t *testing.T, il ast.Expression, value int64) {
 	integ, ok := il.(*ast.IntegerLiteral)
 	require.True(t, ok)
 	require.Equal(t, integ.Value, value)
 	require.Equal(t, integ.TokenLiteral(), fmt.Sprintf("%d", value))
+}
+
+// testIdentifier
+func testIdentifier(t *testing.T, exp ast.Expression, value string) {
+	ident, ok := exp.(*ast.Identifier)
+	require.True(t, ok)
+	require.Equal(t, value, ident.Value)
+	require.Equal(t, value, ident.TokenLiteral())
+}
+
+// testBooleanLiteral
+func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) {
+	bo, ok := exp.(*ast.Boolean)
+	require.True(t, ok)
+	require.Equal(t, value, bo.Value)
+	require.Equal(t, fmt.Sprintf("%t", value), bo.TokenLiteral())
 }
