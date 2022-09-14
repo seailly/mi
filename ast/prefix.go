@@ -2,6 +2,8 @@ package ast
 
 import (
 	"bytes"
+	"fmt"
+
 	"github.com/seailly/mi/token"
 )
 
@@ -20,10 +22,7 @@ func (pe *PrefixExpression) TokenLiteral() string {
 func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("(")
-	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
-	out.WriteString(")")
+	out.WriteString(fmt.Sprintf("(%s%s)", pe.Operator, pe.Right.String()))
 
 	return out.String()
 }

@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/seailly/mi/token"
 )
@@ -25,10 +26,7 @@ func (ms *MutStatement) TokenLiteral() string {
 func (ms *MutStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(ms.TokenLiteral() + " ")
-	out.WriteString(ms.Name.String())
-	out.WriteString(" = ")
-
+	out.WriteString(fmt.Sprintf("%s %s = ", ms.TokenLiteral(), ms.Name.String()))
 	if ms.Value != nil {
 		out.WriteString(ms.Value.String())
 	}
