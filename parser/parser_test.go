@@ -388,3 +388,62 @@ func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) {
 	require.Equal(t, value, bo.Value)
 	require.Equal(t, fmt.Sprintf("%t", value), bo.TokenLiteral())
 }
+
+// TestIfExpression
+func TestIfExpression(t *testing.T) {
+	input := `if (x < y) { x }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	require.Len(t, program.Statements, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	require.True(t, ok)
+
+	testInfixExpression(t, exp.Condition, "x", "<", "y")
+	require.Len(t, exp.Consequence.Statements, 1)
+
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	testIdentifier(t, consequence.Expression, "x")
+	require.Nil(t, exp.Alternative)
+}
+
+// TestIfElseExpression
+func TestIfElseExpression(t *testing.T) {
+	input := `if (x < y) { x } else { y }`
+
+	l := lexer.New(input)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	require.Len(t, program.Statements, 1)
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	exp, ok := stmt.Expression.(*ast.IfExpression)
+	require.True(t, ok)
+
+	testInfixExpression(t, exp.Condition, "x", "<", "y")
+	require.Len(t, exp.Consequence.Statements, 1)
+
+	consequence, ok := exp.Consequence.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	testIdentifier(t, consequence.Expression, "x")
+	require.Len(t, exp.Alternative.Statements, 1)
+
+	alternative, ok := exp.Alternative.Statements[0].(*ast.ExpressionStatement)
+	require.True(t, ok)
+
+	testIdentifier(t, alternative.Expression, "y")
+}
