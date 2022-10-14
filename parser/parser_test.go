@@ -9,33 +9,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMutStatement(t *testing.T) {
-	input := `
-mut x = 5;
-mut y = 10;
-mut foobar = 838383;
-`
-
-	l := lexer.New(input)
-	p := New(l)
-
-	program := p.ParseProgram()
-	require.NotNil(t, p)
-
-	checkParserErrors(t, p)
-	require.Len(t, program.Statements, 3)
-
+// TestMutStatements
+func TestMutStatements(t *testing.T) {
 	tests := []struct {
-		expectedIdentifer string
+		input              string
+		expectedIdentifier string
+		expectedValue      interface{}
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{"mut x = 5;", "x", 5},
+		{"mut y = true;", "y", true},
+		{"mut foobar = y;", "foobar", "y"},
 	}
 
-	for i, tt := range tests {
-		stmt := program.Statements[i]
-		testMutStatement(t, stmt, tt.expectedIdentifer)
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		require.Len(t, program.Statements, 1)
+
+		stmt := program.Statements[0]
+		testMutStatement(t, stmt, tt.expectedIdentifier)
+
+		val := stmt.(*ast.MutStatement).Value
+		testLiteralExpression(t, val, tt.expectedValue)
 	}
 }
 
