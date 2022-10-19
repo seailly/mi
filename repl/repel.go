@@ -6,7 +6,8 @@ import (
 	"io"
 
 	"github.com/seailly/mi/lexer"
-	"github.com/seailly/mi/token"
+	"github.com/seailly/mi/parser"
+	"github.com/seailly/mi/evaluator"
 )
 
 const PROMPT = "> "
@@ -18,16 +19,40 @@ func Start(in io.Reader, out io.Writer) {
 	for {
 		fmt.Printf(PROMPT)
 		scanned := scanner.Scan()
-
 		if !scanned {
 			return
 		}
 
 		line := scanner.Text()
 		l := lexer.New(line)
+		p := parser.New(l)
 
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			fmt.Printf("%+v\n", tok)
+		program := p.ParseProgram()
+		if len(p.Errors()) != 0 {
+			printParserErrors(out, p.Errors())
+			continue
+		}
+
+		evaluated := evaluator.Eval(program)
+		if evaluated != nil {
+			_, err := io.WriteString(out, evaluated.Inspect())
+			if err != nil  {
+				panic("Failed to write string")
+			}
+
+			_, err = io.WriteString(out, "\n")
+			if err != nil  {
+				panic("Failed to write string")
+			}
+		}
+	}
+}
+
+func printParserErrors(out io.Writer, errors []string) {
+	for _, msg := range errors {
+		_, err := io.WriteString(out, "\t"+msg+"\n")
+		if err != nil {
+			panic("Failed to write string")
 		}
 	}
 }
