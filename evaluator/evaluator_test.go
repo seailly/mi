@@ -10,12 +10,12 @@ import (
 )
 
 func TestEvalIntegerExpression(t *testing.T) {
-	tests := []struct{
-		input string
+	tests := []struct {
+		input    string
 		expected int64
 	}{
-		{ "5", 5 },
-		{ "10", 10 },
+		{"5", 5},
+		{"10", 10},
 	}
 
 	for _, tt := range tests {
@@ -25,18 +25,18 @@ func TestEvalIntegerExpression(t *testing.T) {
 }
 
 func TestEvalBooleanExpression(t *testing.T) {
-	tests := []struct{
-		input string
+	tests := []struct {
+		input    string
 		expected bool
 	}{
-		{ "true", true },
-		{ "false", false },
-		}
+		{"true", true},
+		{"false", false},
+	}
 
-		for _, tt := range tests {
-			evaluated := testEval(tt.input)
-			testBooleanObject(t, evaluated, tt.expected)
-		}
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
 }
 
 func testEval(input string) object.Object {
@@ -57,4 +57,23 @@ func testBooleanObject(t *testing.T, obj object.Object, expected bool) {
 	result, ok := obj.(*object.Boolean)
 	require.True(t, ok)
 	require.Equal(t, expected, result.Value)
+}
+
+func TestBangOperator(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{"!true", false},
+		{"!false", true},
+		{"!5", false},
+		{"!!true", true},
+		{"!!false", false},
+		{"!!5", true},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testBooleanObject(t, evaluated, tt.expected)
+	}
 }
