@@ -201,21 +201,33 @@ if (10 > 1) {
 `,
 			"unknown operator: BOOLEAN + BOOLEAN",
 		},
+		{
+			"foobar",
+			"identifier not found: foobar",
+		},
 	}
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
 
 		errObj, ok := evaluated.(*object.Error)
-		if !ok {
-			t.Errorf("no error object returned. got=%T(%+v)",
-				evaluated, evaluated)
-			continue
-		}
+		require.True(t, ok)
+		require.Equal(t, tt.expectedMessage, errObj.Message)
+	}
+}
 
-		if errObj.Message != tt.expectedMessage {
-			t.Errorf("wrong error message. expected=%q, got=%q",
-				tt.expectedMessage, errObj.Message)
-		}
+func TestMutStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"mut a = 5; a;", 5},
+		{"mut a = 5 * 5; a;", 25},
+		{"mut a = 5; mut b = a; b;", 5},
+		{"mut a = 5; mut b = a; mut c = a + b + 5; c;", 15},
+	}
+
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }
