@@ -8,6 +8,7 @@ const (
 	NULL_OBJECT         = "NULL"
 	RETURN_VALUE_OBJECT = "RETURN_VALUE"
 	ERROR_OBJECT        = "ERROR"
+	FUNCTION_OBJECT     = "FUNCTION"
 )
 
 // Object Each value represents itself

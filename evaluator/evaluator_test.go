@@ -231,3 +231,32 @@ func TestMutStatements(t *testing.T) {
 		testIntegerObject(t, testEval(tt.input), tt.expected)
 	}
 }
+
+func TestFunctionObject(t *testing.T) {
+	input := "fn(x) { x + 2; };"
+
+	evaluated := testEval(input)
+	fn, ok := evaluated.(*object.Function)
+	require.True(t, ok)
+	require.Len(t, fn.Parameters, 1)
+	require.Equal(t, fn.Parameters[0].String(), "x")
+	require.Equal(t, fn.Body.String(), "(x + 2)")
+}
+
+func TestFunctionApplication(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"mut identity = fn(x) { x; }; identity(5);", 5},
+		{"mut identity = fn(x) { return x; }; identity(5);", 5},
+		{"mut double = fn(x) { x * 2; }; double(5);", 10},
+		{"mut add = fn(x, y) { x + y; }; add(5, 5);", 10},
+		{"mut add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"fn(x) { x; }(5)", 5},
+	}
+
+	for _, tt := range tests {
+		testIntegerObject(t, testEval(tt.input), tt.expected)
+	}
+}
